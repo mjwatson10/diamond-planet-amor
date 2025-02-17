@@ -1,6 +1,45 @@
-node_modules
+# Compiler files
+cache/
+out/
 
-#Hardhat files
-cache
-artifacts
+# Ignores development broadcast logs
+!/broadcast
+/broadcast/*/31337/
+/broadcast/**/dry-run/
+
+# Docs
+docs/
+
+# Dotenv file
 .env
+
+# Node modules
+node_modules/
+
+# Coverage
+coverage/
+coverage.json
+
+# Hardhat files
+artifacts/
+typechain/
+typechain-types/
+
+# Foundry
+cache/
+out/
+broadcast/
+
+# VS Code
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Misc
+*.log
+*.swp
+*.swo
