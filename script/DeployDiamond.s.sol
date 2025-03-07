@@ -5,7 +5,7 @@ import "forge-std/Script.sol";
 import "../src/Diamond.sol";
 import "../src/facets/DiamondCutFacet.sol";
 import "../src/facets/DiamondLoupeFacet.sol";
-import "../src/facets/NFTFacet.sol";
+import "../src/facets/PlanetAmorNFTFacet.sol";
 import "../src/interfaces/IDiamondCut.sol";
 
 contract DeployDiamond is Script {
@@ -21,7 +21,7 @@ contract DeployDiamond is Script {
 
         // Deploy facets
         DiamondLoupeFacet diamondLoupeFacet = new DiamondLoupeFacet();
-        NFTFacet nftFacet = new NFTFacet();
+        PlanetAmorNFTFacet nftFacet = new PlanetAmorNFTFacet();
 
         // Build cut struct for diamond loupe and NFT facets
         IDiamondCut.FacetCut[] memory cut = new IDiamondCut.FacetCut[](2);
@@ -42,16 +42,16 @@ contract DeployDiamond is Script {
 
         // Add NFTFacet functions
         bytes4[] memory nftFacetSelectors = new bytes4[](10);
-        nftFacetSelectors[0] = NFTFacet.mint.selector;
-        nftFacetSelectors[1] = NFTFacet.tokenURI.selector;
-        nftFacetSelectors[2] = NFTFacet.setBaseURI.selector;
-        nftFacetSelectors[3] = NFTFacet.setUnrevealedURI.selector;
-        nftFacetSelectors[4] = NFTFacet.reveal.selector;
-        nftFacetSelectors[5] = NFTFacet.withdraw.selector;
-        nftFacetSelectors[6] = NFTFacet.numberMinted.selector;
-        nftFacetSelectors[7] = NFTFacet.totalMinted.selector;
-        nftFacetSelectors[8] = NFTFacet.name.selector;
-        nftFacetSelectors[9] = NFTFacet.symbol.selector;
+        nftFacetSelectors[0] = PlanetAmorNFTFacet.mint.selector;
+        nftFacetSelectors[1] = PlanetAmorNFTFacet.tokenURI.selector;
+        nftFacetSelectors[2] = PlanetAmorNFTFacet.setBaseURI.selector;
+        nftFacetSelectors[3] = PlanetAmorNFTFacet.setUnrevealedURI.selector;
+        nftFacetSelectors[4] = PlanetAmorNFTFacet.reveal.selector;
+        nftFacetSelectors[5] = PlanetAmorNFTFacet.withdraw.selector;
+        nftFacetSelectors[6] = PlanetAmorNFTFacet.numberMinted.selector;
+        nftFacetSelectors[7] = PlanetAmorNFTFacet.totalMinted.selector;
+        nftFacetSelectors[8] = PlanetAmorNFTFacet.name.selector;
+        nftFacetSelectors[9] = PlanetAmorNFTFacet.symbol.selector;
 
         cut[1] = IDiamondCut.FacetCut({
             facetAddress: address(nftFacet),
@@ -67,6 +67,6 @@ contract DeployDiamond is Script {
         console.log("Diamond deployed at:", address(diamond));
         console.log("DiamondCutFacet deployed at:", address(diamondCutFacet));
         console.log("DiamondLoupeFacet deployed at:", address(diamondLoupeFacet));
-        console.log("NFTFacet deployed at:", address(nftFacet));
+        console.log("PlanetAmorNFTFacet deployed at:", address(nftFacet));
     }
 }

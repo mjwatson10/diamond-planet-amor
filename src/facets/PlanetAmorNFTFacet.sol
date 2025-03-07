@@ -4,14 +4,11 @@ pragma solidity ^0.8.0;
 import {ERC721A} from "ERC721A/ERC721A.sol";
 import {LibDiamond} from "../libraries/LibDiamond.sol";
 
-contract NFTFacet is ERC721A {
-    error MintPriceNotPaid();
+contract PlanetAmorNFTFacet is ERC721A {
     error NonExistentTokenURI();
     error WithdrawTransfer();
 
     event PermanentURI(string _value, uint256 indexed _id);
-
-    uint256 public constant MINT_PRICE = 1 ether;
 
     string internal baseTokenURI;
     string public unrevealedURI;
@@ -24,8 +21,7 @@ contract NFTFacet is ERC721A {
         _;
     }
 
-    function mint(uint256 quantity) external payable {
-        if (msg.value < MINT_PRICE * quantity) revert MintPriceNotPaid();
+    function mint(uint256 quantity) external onlyOwner {
         _mint(msg.sender, quantity);
     }
 
