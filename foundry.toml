@@ -3,26 +3,18 @@ src = "src"
 out = "out"
 libs = ["lib"]
 solc = "0.8.18"
+optimizer = true
+optimizer_runs = 200
 remappings = [
     "forge-std/=lib/forge-std/src/",
     "ERC721A/=lib/ERC721A/contracts/"
 ]
 
-[profile.default.fuzz]
-runs = 25
-max_test_rejects = 65536
-seed = "0x3737"
-max_local_rejects = 512
-max_global_rejects = 1024
-dictionary_weight = 40
-include_storage = true
-include_push_bytes = true
-
-[profile.ci]
-fuzz = { runs = 1_000 }
-invariant = { runs = 1_000 }
+[rpc_endpoints]
+mainnet = "${MAINNET_RPC_URL}"
+sepolia = "${SEPOLIA_RPC_URL}"
 
 [etherscan]
 base-sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api-sepolia.basescan.org/api" }
-
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+mainnet = { key = "${ETHERSCAN_API_KEY}" }
+sepolia = { key = "${ETHERSCAN_API_KEY}" }
