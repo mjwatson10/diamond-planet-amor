@@ -1,72 +1,81 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.18;
 
-import "forge-std/Script.sol";
-import "../src/Diamond.sol";
-import "../src/facets/DiamondCutFacet.sol";
-import "../src/facets/DiamondLoupeFacet.sol";
-import "../src/facets/PlanetAmorNFTFacet.sol";
-import "../src/interfaces/IDiamondCut.sol";
+import {Script} from "forge-std/Script.sol";
+import {console} from "forge-std/console.sol";
+import {Diamond} from "../src/Diamond.sol";
+import {DiamondCutFacet} from "../src/facets/DiamondCutFacet.sol";
+import {DiamondLoupeFacet} from "../src/facets/DiamondLoupeFacet.sol";
+import {PlanetAmorNFTFacet} from "../src/facets/PlanetAmorNFTFacet.sol";
+import {IDiamondCut} from "../src/interfaces/IDiamondCut.sol";
 
+/// @title Diamond Standard Deployment Script
+/// @author Planet Amor Team
+/// @notice Deploys the Diamond proxy and all facets for the Planet Amor NFT collection
+/// @dev Implements EIP-2535 Diamond Standard deployment pattern
 contract DeployDiamond is Script {
-    function run() external {
+    /// @notice Sets up any required state before deployment
+    function setUp() public {}
+
+    /// @notice Main deployment function
+    /// @dev Deploys Diamond proxy, all facets, and configures initial diamond cut
+    function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy DiamondCutFacet
         DiamondCutFacet diamondCutFacet = new DiamondCutFacet();
-        
+        console.log("DiamondCutFacet deployed at: %s", address(diamondCutFacet));
+
         // Deploy Diamond
-        Diamond diamond = new Diamond(msg.sender, address(diamondCutFacet));
+        address owner = vm.addr(deployerPrivateKey);
+        Diamond diamond = new Diamond(owner, address(diamondCutFacet));
+        console.log("Diamond deployed at: %s", address(diamond));
 
-        // Deploy facets
+        // Deploy DiamondLoupeFacet
         DiamondLoupeFacet diamondLoupeFacet = new DiamondLoupeFacet();
-        PlanetAmorNFTFacet nftFacet = new PlanetAmorNFTFacet();
+        console.log("DiamondLoupeFacet deployed at: %s", address(diamondLoupeFacet));
 
-        // Build cut struct for diamond loupe and NFT facets
+        // Deploy PlanetAmorNFTFacet
+        PlanetAmorNFTFacet nftFacet = new PlanetAmorNFTFacet();
+        console.log("PlanetAmorNFTFacet deployed at: %s", address(nftFacet));
+
+        // Build cut struct for diamond initialization
         IDiamondCut.FacetCut[] memory cut = new IDiamondCut.FacetCut[](2);
 
-        // Add DiamondLoupeFacet functions
-        bytes4[] memory diamondLoupeFacetSelectors = new bytes4[](5);
-        diamondLoupeFacetSelectors[0] = DiamondLoupeFacet.facets.selector;
-        diamondLoupeFacetSelectors[1] = DiamondLoupeFacet.facetFunctionSelectors.selector;
-        diamondLoupeFacetSelectors[2] = DiamondLoupeFacet.facetAddresses.selector;
-        diamondLoupeFacetSelectors[3] = DiamondLoupeFacet.facetAddress.selector;
-        diamondLoupeFacetSelectors[4] = DiamondLoupeFacet.supportsInterface.selector;
+        // Add DiamondLoupeFacet
+        bytes4[] memory loupeSelectors = new bytes4[](5);
+        loupeSelectors[0] = DiamondLoupeFacet.facets.selector;
+        loupeSelectors[1] = DiamondLoupeFacet.facetFunctionSelectors.selector;
+        loupeSelectors[2] = DiamondLoupeFacet.facetAddresses.selector;
+        loupeSelectors[3] = DiamondLoupeFacet.facetAddress.selector;
+        loupeSelectors[4] = DiamondLoupeFacet.supportsInterface.selector;
 
         cut[0] = IDiamondCut.FacetCut({
             facetAddress: address(diamondLoupeFacet),
             action: IDiamondCut.FacetCutAction.Add,
-            functionSelectors: diamondLoupeFacetSelectors
+            functionSelectors: loupeSelectors
         });
 
-        // Add NFTFacet functions
-        bytes4[] memory nftFacetSelectors = new bytes4[](10);
-        nftFacetSelectors[0] = PlanetAmorNFTFacet.mint.selector;
-        nftFacetSelectors[1] = PlanetAmorNFTFacet.tokenURI.selector;
-        nftFacetSelectors[2] = PlanetAmorNFTFacet.setBaseURI.selector;
-        nftFacetSelectors[3] = PlanetAmorNFTFacet.setUnrevealedURI.selector;
-        nftFacetSelectors[4] = PlanetAmorNFTFacet.reveal.selector;
-        nftFacetSelectors[5] = PlanetAmorNFTFacet.withdraw.selector;
-        nftFacetSelectors[6] = PlanetAmorNFTFacet.numberMinted.selector;
-        nftFacetSelectors[7] = PlanetAmorNFTFacet.totalMinted.selector;
-        nftFacetSelectors[8] = PlanetAmorNFTFacet.name.selector;
-        nftFacetSelectors[9] = PlanetAmorNFTFacet.symbol.selector;
+        // Add PlanetAmorNFTFacet
+        bytes4[] memory nftSelectors = new bytes4[](7);
+        nftSelectors[0] = PlanetAmorNFTFacet.mint.selector;
+        nftSelectors[1] = PlanetAmorNFTFacet.tokenURI.selector;
+        nftSelectors[2] = PlanetAmorNFTFacet.setBaseURI.selector;
+        nftSelectors[3] = PlanetAmorNFTFacet.withdraw.selector;
+        nftSelectors[4] = PlanetAmorNFTFacet.numberMinted.selector;
+        nftSelectors[5] = PlanetAmorNFTFacet.name.selector;
+        nftSelectors[6] = PlanetAmorNFTFacet.symbol.selector;
 
         cut[1] = IDiamondCut.FacetCut({
             facetAddress: address(nftFacet),
             action: IDiamondCut.FacetCutAction.Add,
-            functionSelectors: nftFacetSelectors
+            functionSelectors: nftSelectors
         });
 
-        // Upgrade diamond with facets
+        // Execute diamond cut
         IDiamondCut(address(diamond)).diamondCut(cut, address(0), "");
 
         vm.stopBroadcast();
-
-        console.log("Diamond deployed at:", address(diamond));
-        console.log("DiamondCutFacet deployed at:", address(diamondCutFacet));
-        console.log("DiamondLoupeFacet deployed at:", address(diamondLoupeFacet));
-        console.log("PlanetAmorNFTFacet deployed at:", address(nftFacet));
     }
 }
