@@ -7,10 +7,10 @@ import "../../../src/facets/DiamondCutFacet.sol";
 import "../../../src/facets/PlanetAmorNFTFacet.sol";
 import "../../../src/interfaces/IDiamondCut.sol";
 
-/// @title Planet Amor NFT Mint Fuzz Tests
-/// @notice Fuzz test suite focused on minting functionality
+/// @title Planet Amor NFT Core Functionality Fuzz Tests
+/// @notice Fuzz test suite for core NFT functionality
 /// @dev Uses Diamond proxy pattern for testing
-contract MintFuzzTest is Test {
+contract PlanetAmorNFTFacetFuzzTest is Test {
     Diamond diamond;
     DiamondCutFacet diamondCutFacet;
     PlanetAmorNFTFacet nftFacet;
@@ -19,6 +19,8 @@ contract MintFuzzTest is Test {
     // Cache selectors to reduce gas costs
     bytes4 constant MINT_SELECTOR = PlanetAmorNFTFacet.mint.selector;
     bytes4 constant NUMBER_MINTED_SELECTOR = PlanetAmorNFTFacet.numberMinted.selector;
+    bytes4 constant SET_BASE_URI_SELECTOR = PlanetAmorNFTFacet.setBaseURI.selector;
+    bytes4 constant TOKEN_URI_SELECTOR = PlanetAmorNFTFacet.tokenURI.selector;
 
     /// @notice Set up test environment
     function setUp() public {
@@ -34,9 +36,11 @@ contract MintFuzzTest is Test {
         nftFacet = new PlanetAmorNFTFacet();
 
         // Add only required selectors
-        bytes4[] memory selectors = new bytes4[](2);
+        bytes4[] memory selectors = new bytes4[](4);
         selectors[0] = MINT_SELECTOR;
         selectors[1] = NUMBER_MINTED_SELECTOR;
+        selectors[2] = SET_BASE_URI_SELECTOR;
+        selectors[3] = TOKEN_URI_SELECTOR;
 
         IDiamondCut.FacetCut[] memory cut = new IDiamondCut.FacetCut[](1);
         cut[0] = IDiamondCut.FacetCut({
@@ -78,5 +82,20 @@ contract MintFuzzTest is Test {
         vm.prank(nonOwner);
         vm.expectRevert("LibDiamond: Must be contract owner");
         PlanetAmorNFTFacet(address(diamond)).mint(quantity);
+    }
+
+    /// @notice Fuzz test setting base URI with random strings
+    /// @param baseURI Random base URI to set
+    function testFuzz_SetBaseURIWithRandomString(string calldata baseURI) public {
+        // Ensure baseURI is not empty and has reasonable length
+        vm.assume(bytes(baseURI).length > 0 && bytes(baseURI).length < 1000);
+        
+        vm.startPrank(owner);
+        PlanetAmorNFTFacet(address(diamond)).mint(1);
+        PlanetAmorNFTFacet(address(diamond)).setBaseURI(baseURI);
+        
+        string memory uri = PlanetAmorNFTFacet(address(diamond)).tokenURI(0);
+        assertEq(uri, string(abi.encodePacked(baseURI, "0")), "Incorrect token URI");
+        vm.stopPrank();
     }
 }

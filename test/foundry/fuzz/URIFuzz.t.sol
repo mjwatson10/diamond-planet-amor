@@ -7,25 +7,38 @@ import "../../../src/facets/DiamondCutFacet.sol";
 import "../../../src/facets/PlanetAmorNFTFacet.sol";
 import "../../../src/interfaces/IDiamondCut.sol";
 
+/// @title Planet Amor NFT URI Fuzz Tests
+/// @notice Fuzz test suite focused on URI functionality
+/// @dev Uses Diamond proxy pattern for testing
 contract URIFuzzTest is Test {
     Diamond diamond;
     DiamondCutFacet diamondCutFacet;
     PlanetAmorNFTFacet nftFacet;
     address owner;
 
+    // Cache selectors to reduce gas costs
+    bytes4 constant MINT_SELECTOR = PlanetAmorNFTFacet.mint.selector;
+    bytes4 constant TOKEN_URI_SELECTOR = PlanetAmorNFTFacet.tokenURI.selector;
+    bytes4 constant SET_BASE_URI_SELECTOR = PlanetAmorNFTFacet.setBaseURI.selector;
+
+    /// @notice Set up test environment
     function setUp() public {
-        owner = makeAddr("owner");
+        // Deploy with fixed owner for deterministic testing
+        owner = address(0x1234);
         vm.deal(owner, 100 ether);
+        
         vm.startPrank(owner);
         
+        // Deploy minimal Diamond setup
         diamondCutFacet = new DiamondCutFacet();
         diamond = new Diamond(owner, address(diamondCutFacet));
         nftFacet = new PlanetAmorNFTFacet();
 
+        // Add only required selectors
         bytes4[] memory selectors = new bytes4[](3);
-        selectors[0] = PlanetAmorNFTFacet.mint.selector;
-        selectors[1] = PlanetAmorNFTFacet.tokenURI.selector;
-        selectors[2] = PlanetAmorNFTFacet.setBaseURI.selector;
+        selectors[0] = MINT_SELECTOR;
+        selectors[1] = TOKEN_URI_SELECTOR;
+        selectors[2] = SET_BASE_URI_SELECTOR;
 
         IDiamondCut.FacetCut[] memory cut = new IDiamondCut.FacetCut[](1);
         cut[0] = IDiamondCut.FacetCut({
@@ -38,48 +51,33 @@ contract URIFuzzTest is Test {
         vm.stopPrank();
     }
 
-    function _toString(uint256 value) internal pure returns (string memory) {
-        if (value == 0) return "0";
-        
-        uint256 temp = value;
-        uint256 digits;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-        
-        bytes memory buffer = new bytes(digits);
-        while (value != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
-            value /= 10;
-        }
-        return string(buffer);
-    }
-
-    function testFuzz_TokenURIWithRandomTokenId(uint256 tokenId) public {
-        tokenId = bound(tokenId, 0, 10);
+    /// @notice Fuzz test URI retrieval for minted tokens
+    /// @param tokenId Random token ID to test
+    /// @param baseURI Random base URI to set
+    function testFuzz_TokenURIForValidToken(uint256 tokenId, string calldata baseURI) public {
+        // Bound token ID to reasonable range and ensure baseURI is not empty
+        tokenId = bound(tokenId, 0, 99);
+        vm.assume(bytes(baseURI).length > 0 && bytes(baseURI).length < 1000);
         
         vm.startPrank(owner);
-        PlanetAmorNFTFacet(address(diamond)).mint(5);
-        PlanetAmorNFTFacet(address(diamond)).setBaseURI("ipfs://base/");
-        vm.stopPrank();
-
-        if (tokenId >= 5) {
-            vm.expectRevert(PlanetAmorNFTFacet.NonExistentTokenURI.selector);
-            PlanetAmorNFTFacet(address(diamond)).tokenURI(tokenId);
-        } else {
-            string memory uri = PlanetAmorNFTFacet(address(diamond)).tokenURI(tokenId);
-            assertEq(uri, string(abi.encodePacked("ipfs://base/", _toString(tokenId))));
-        }
-    }
-
-    function testFuzz_SetBaseURIWithRandomString(string memory baseURI) public {
-        vm.startPrank(owner);
-        PlanetAmorNFTFacet(address(diamond)).mint(1);
+        
+        // Mint token and set URI
+        PlanetAmorNFTFacet(address(diamond)).mint(tokenId + 1);
         PlanetAmorNFTFacet(address(diamond)).setBaseURI(baseURI);
-        string memory uri = PlanetAmorNFTFacet(address(diamond)).tokenURI(0);
-        assertEq(uri, bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, "0")) : "");
+        
+        string memory uri = PlanetAmorNFTFacet(address(diamond)).tokenURI(tokenId);
+        assertEq(uri, string(abi.encodePacked(baseURI, vm.toString(tokenId))), "Incorrect token URI");
+        
         vm.stopPrank();
+    }
+
+    /// @notice Fuzz test URI retrieval for non-existent tokens
+    /// @param tokenId Random non-existent token ID
+    function testFuzz_TokenURIForInvalidToken(uint256 tokenId) public {
+        // Use token ID beyond minted range
+        vm.assume(tokenId > 0);
+        
+        vm.expectRevert(PlanetAmorNFTFacet.NonExistentTokenURI.selector);
+        PlanetAmorNFTFacet(address(diamond)).tokenURI(tokenId);
     }
 }

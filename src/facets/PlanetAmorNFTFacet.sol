@@ -16,6 +16,8 @@ contract PlanetAmorNFTFacet {
     error ExceedsMaxMintQuantity();
     /// @notice Thrown when trying to mint zero tokens
     error ZeroMintQuantity();
+    /// @notice Thrown when trying to set invalid base URI
+    error InvalidBaseURI();
 
     /// @notice Emitted when a token's URI is set permanently
     /// @param _value The permanent URI value
@@ -86,6 +88,7 @@ contract PlanetAmorNFTFacet {
     /// @dev Only callable by contract owner
     /// @param baseURI New base URI
     function setBaseURI(string memory baseURI) external onlyOwner {
+        if (bytes(baseURI).length == 0) revert InvalidBaseURI();
         diamondStorage().baseTokenURI = baseURI;
     }
 

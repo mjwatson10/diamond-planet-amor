@@ -8,9 +8,19 @@ remappings = [
     "ERC721A/=lib/ERC721A/contracts/"
 ]
 
-[profile.fuzz]
-runs = 5
-max_test_rejects = 100000
+[profile.default.fuzz]
+runs = 25
+max_test_rejects = 65536
+seed = "0x3737"
+max_local_rejects = 512
+max_global_rejects = 1024
+dictionary_weight = 40
+include_storage = true
+include_push_bytes = true
+
+[profile.ci]
+fuzz = { runs = 1_000 }
+invariant = { runs = 1_000 }
 
 [etherscan]
 base-sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api-sepolia.basescan.org/api" }
