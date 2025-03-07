@@ -29,6 +29,8 @@ typechain-types/
 cache/
 out/
 broadcast/
+lib/
+forge-cache/
 
 # VS Code
 .vscode/
